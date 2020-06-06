@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">QuickMeal</string>
+    <string name="retry">ERROR !! Tap to retry.</string>
+    <string name="search_meal">Search Meal</string>
+    <string name="meals">Meals</string>
+    <string name="cannot_open">Can\'t open link</string>
+    <string name="activity_ingredients">Ingredients</string>
+
+
+</resources>

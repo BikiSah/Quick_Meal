@@ -1,0 +1,219 @@
+apply plugin: 'com.android.application'
+
+apply plugin: 'kotlin-android'
+
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
+
+//Version information
+def versionMajor = 1
+def versionMinor = 0
+def versionPatch = 0
+
+// Signing properties.
+def debugKeyAliasValue = "androiddebugkey"
+def debugKeyPasswordValue = "android"
+def debugStorePasswordValue = "android"
+def debugStoreFilePath = rootProject.file('keystore/debug.keystore')
+
+def releaseKeyAliasValue = "your key"
+def releaseKeyPasswordValue = "your password"
+def releaseStorePasswordValue = "your password"
+def releaseStoreFilePath = rootProject.file('keystore/release-keystore.jks')
+
+android {
+    compileSdkVersion rootProject.compileSdkVersion
+    defaultConfig {
+        applicationId "com.biki.quickmeal"
+        minSdkVersion rootProject.minSdkVersion
+        targetSdkVersion rootProject.targetSdkVersion
+        versionCode versionMajor * 1000000 + versionMinor * 1000 + versionPatch * 100
+        versionName "${versionMajor}.${versionMinor}.${versionPatch}"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables.useSupportLibrary = true
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = ["room.schemaLocation": "$projectDir/schemas".toString()]
+            }
+        }
+    }
+    signingConfigs {
+        debug {
+            /*keyAlias debugKeyAliasValue
+            keyPassword debugKeyPasswordValue
+            storeFile debugStoreFilePath
+            storePassword debugStorePasswordValue
+            v2SigningEnabled false*/
+        }
+        relase {
+            keyAlias releaseKeyAliasValue
+            keyPassword releaseKeyPasswordValue
+            storeFile releaseStoreFilePath
+            storePassword releaseStorePasswordValue
+        }
+    }
+    buildTypes {
+        release {
+            multiDexEnabled true
+            postprocessing {
+                removeUnusedCode false
+                removeUnusedResources false
+                obfuscate false
+                optimizeCode false
+                proguardFile 'proguard-rules.pro'
+            }
+        }
+        debug {
+            applicationIdSuffix '.debug'
+            versionNameSuffix '-DEBUG'
+            debuggable true
+            minifyEnabled false
+            shrinkResources false
+            multiDexEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    flavorDimensions "app", "environment"
+    productFlavors {
+        def STRING = "String"
+        def API_URL = "API_URL"
+        def BOOLEAN = "Boolean"
+        def CRASHLYTICS = "enableCrashlytics"
+        def LEAKCANARY = "enableLeakCanary"
+
+        app {
+            dimension "app"
+            applicationIdSuffix ".quickmeal"
+        }
+
+
+        development {
+            dimension "environment"
+            applicationIdSuffix ".development"
+            versionNameSuffix "-development"
+            buildConfigField BOOLEAN, LEAKCANARY, 'true'
+            buildConfigField STRING, API_URL, '"https://www.themealdb.com/api/json/"'
+
+        }
+
+        production {
+            dimension "environment"
+            buildConfigField BOOLEAN, LEAKCANARY, 'false'
+            buildConfigField STRING, API_URL, '"https://www.themealdb.com/api/json/"'
+
+        }
+    }
+
+    dexOptions {
+        preDexLibraries = false
+        dexInProcess = false
+        javaMaxHeapSize "4g"
+    }
+    packagingOptions {
+        exclude 'LICENSE.txt'
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/ASL2.0'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/rxjava.properties'
+    }
+    lintOptions {
+        quiet true
+        abortOnError false
+        ignoreWarnings true
+    }
+}
+
+kapt {
+    correctErrorTypes = true
+    generateStubs = true
+}
+
+configurations.all {
+    resolutionStrategy {
+        force "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    }
+    exclude module: 'httpclient'
+    exclude module: 'commons-logging'
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+    //Support Framework
+    implementation "androidx.appcompat:appcompat:$supportLibVersion"
+    implementation "androidx.recyclerview:recyclerview:$supportLibVersion"
+    implementation "androidx.annotation:annotation:$androidxAnnotationVersion"
+    implementation "com.google.android.material:material:$materialVersion"
+    implementation "androidx.constraintlayout:constraintlayout:$constraintLayoutVersion"
+
+    //Crashlytics
+    implementation("com.crashlytics.sdk.android:crashlytics:$crashLyticsVersion") {
+        transitive = true
+    }
+
+    //Leakcanary to identify the memory leaks
+    debugImplementation "com.squareup.leakcanary:leakcanary-android:$leakCanaryVersion"
+    releaseImplementation "com.squareup.leakcanary:leakcanary-android-no-op:$leakCanaryVersion"
+
+    //Dependency Injection Framework
+    kapt "com.google.dagger:dagger-compiler:$daggerVersion"
+    implementation "com.google.dagger:dagger:$daggerVersion"
+    implementation "com.google.dagger:dagger-android-support:$daggerVersion"
+    implementation "javax.annotation:jsr250-api:$javaxAnnotationVersion"
+    implementation "javax.inject:javax.inject:$javaxInjectVersion"
+
+    //Reactive Programming
+    implementation "io.reactivex.rxjava2:rxkotlin:$rxKotlinVersion"
+    implementation "io.reactivex.rxjava2:rxandroid:$rxAndroidVersion"
+    implementation 'com.jakewharton.rxbinding3:rxbinding:3.1.0'
+
+    //Logging
+    implementation "com.jakewharton.timber:timber:$timberVersion"
+
+    //Architecture Framework
+    implementation "androidx.lifecycle:lifecycle-runtime:$archVersion"
+    implementation "androidx.lifecycle:lifecycle-extensions:$archVersion"
+    implementation "androidx.paging:paging-runtime:2.1.0"
+    kapt "androidx.lifecycle:lifecycle-compiler:$archVersion"
+
+
+    //ORM Framework
+    implementation "androidx.room:room-runtime:$roomVersion"
+    kapt "androidx.room:room-compiler:$roomVersion"
+    implementation "androidx.room:room-rxjava2:$roomVersion"
+
+    //Networking Framework
+    implementation "com.google.code.gson:gson:$gsonVersion"
+    implementation "com.squareup.okhttp3:okhttp:$okHttpVersion"
+    implementation "com.squareup.okhttp3:logging-interceptor:$okHttpVersion"
+    implementation "com.squareup.retrofit2:retrofit:$retrofitVersion"
+    implementation "com.squareup.retrofit2:converter-gson:$retrofitVersion"
+    implementation "com.squareup.retrofit2:adapter-rxjava2:$retrofitVersion"
+
+    //Image loading Framework
+    implementation 'com.squareup.picasso:picasso:2.71828'
+
+    //Multidex
+    implementation "com.android.support:multidex:$multidexVersion"
+
+    //Unit Testing Framework
+    testImplementation "junit:junit:$jUnitVersion"
+    testImplementation "androidx.arch.core:core-testing:2.1.0"
+    testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
+    testImplementation "org.assertj:assertj-core:$assertJVersion"
+    testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0"
+
+    testImplementation "org.mockito:mockito-core:$mockitoAndroidVersion"
+    testImplementation "androidx.test:runner:$runnerVersion"
+    testImplementation "androidx.test:rules:$runnerVersion"
+
+    //UI Testing Framework
+    androidTestImplementation "androidx.test.espresso:espresso-core:$espressoVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$espressoVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-contrib:$espressoVersion"
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+}
